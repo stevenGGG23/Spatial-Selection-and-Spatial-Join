@@ -5,7 +5,9 @@ Where are crimes concentrated in Nashville (Davidson County, TN)? This project u
 1. **Spatial selection:** which crimes happened inside ZIP code 37072?
 2. **Spatial join:** how many crimes happened in each ZIP code?
 
-![Results map](images/results_map.png)
+<img width="1568" height="784" alt="image" src="https://github.com/user-attachments/assets/f7a024ed-d2b6-45e0-a815-c47017611b2b" />
+<img width="1512" height="804" alt="image" src="https://github.com/user-attachments/assets/7d1ef2af-8018-4b1e-802e-767d3cd0b806" />
+
 
 ## Key results
 
