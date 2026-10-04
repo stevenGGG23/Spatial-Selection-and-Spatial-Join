@@ -1,53 +1,119 @@
-Steven Gobran - E1: Spatial Selection and Spatial Join (QGIS)
+# Davidson County Crime Analysis: Spatial Selection & Spatial Join
 
-FILES
-1. Steven_Gobran_E1_selection.zip
-   Crime points that fall within ZIP code 37072.
-   Contains: .shp, .shx, .dbf, .prj, .cpg
-   Result: 289 crime points
+Where are crimes concentrated in Nashville (Davidson County, TN)? This project uses QGIS and Python to answer two spatial questions with three years of reported crime locations:
 
-2. Steven_Gobran_E1_join.zip
-   Davidson County ZIP codes with the number of crimes in each.
-   Contains: .shp, .shx, .dbf, .prj, .cpg
-   Result: 38 ZIP codes, crime count stored in the NUMPOINTS field
+1. **Spatial selection:** which crimes happened inside ZIP code 37072?
+2. **Spatial join:** how many crimes happened in each ZIP code?
 
-DATA
-- Davidson.shp: Davidson County polygons with ZIP code field ZCTA5CE20
-  (field identified from Davidson.xml: "2020 Census 5-digit ZIP Code Tabulation Area code")
-- CrimeLocations.shp: crime point locations, last 3 years
-- Both layers use EPSG:4326 (WGS 84)
+![Results map](images/results_map.png)
 
-TASK 1: SPATIAL SELECTION
-1. Loaded Davidson and CrimeLocations into QGIS.
-2. Select Features by Expression on Davidson: "ZCTA5CE20" = '37072'
-   (344 Davidson polygons selected).
-3. Vector > Research Tools > Select by Location:
-   - Select features from: CrimeLocations
-   - Geometric predicate: are within
-   - Comparing to: Davidson (selected features only)
-4. Exported the 289 selected points as Steven_Gobran_E1_selection (ESRI Shapefile).
+## Key results
 
-TASK 2: SPATIAL JOIN
-1. The Davidson layer is made of 13,379 small Census polygons, each tagged
-   with a ZIP code. To count crimes per ZIP code, the polygons were first
-   merged with Vector > Geoprocessing Tools > Dissolve on field ZCTA5CE20,
-   giving 38 ZIP code polygons.
-2. Vector > Analysis Tools > Count Points in Polygon:
-   - Polygons: Dissolved
+| | Result |
+|---|---|
+| Crime points analyzed | 108,287 |
+| Crimes within ZIP 37072 (Task 1) | **289** |
+| ZIP codes in Davidson County (Task 2) | **38** |
+| Crimes counted inside a ZIP code | 103,218 |
+
+**Top 5 ZIP codes by crime count**
+
+| ZIP code | Crimes |
+|---|---:|
+| 37013 | 11,833 |
+| 37211 | 10,593 |
+| 37203 | 8,466 |
+| 37207 | 8,116 |
+| 37115 | 7,323 |
+
+The full table is in [`crime_counts_by_zip.csv`](crime_counts_by_zip.csv). Crime is heaviest in downtown (37203) and the southeast (37013, 37211). The rural north and west have the fewest crimes.
+
+## Data
+
+| Layer | Type | Description |
+|---|---|---|
+| `Davidson.shp` | Polygons (13,379) | Davidson County Census polygons, each tagged with a ZIP code |
+| `Davidson.xml` | Metadata | Column descriptions for the Davidson attribute table |
+| `CrimeLocations.shp` | Points (108,287) | Locations of crimes reported in Davidson County over the last 3 years |
+
+- **ZIP code field:** `ZCTA5CE20` (2020 Census 5-digit ZIP Code Tabulation Area, from `Davidson.xml`)
+- **Coordinate system:** EPSG:4326 (WGS 84)
+- Data was provided for a course assignment and is not included in this repo.
+
+## Method
+
+### Task 1: Spatial selection
+
+1. **Select by Expression** on Davidson: `"ZCTA5CE20" = '37072'` (344 polygons)
+2. **Select by Location** on CrimeLocations
+   - Predicate: *are within*
+   - Compared to: Davidson, *selected features only*
+3. Export the selected points: `Steven_Gobran_E1_selection.shp`
+
+**Result:** 289 crimes in ZIP 37072.
+
+### Task 2: Spatial join
+
+1. **Dissolve** Davidson on `ZCTA5CE20`. The layer is made of 13,379 small Census polygons, so they have to be merged into one polygon per ZIP code before counting. This step turns 13,379 polygons into 38.
+2. **Count Points in Polygon**
+   - Polygons: dissolved ZIP codes
    - Points: CrimeLocations
-   - Count field: NUMPOINTS
-3. Exported the result as Steven_Gobran_E1_join (ESRI Shapefile).
+   - Output field: `NUMPOINTS`
+3. Export the result: `Steven_Gobran_E1_join.shp`
 
-RESULTS (top 5 ZIP codes by crime count)
-  37013  11,833
-  37211  10,593
-  37203   8,466
-  37207   8,116
-  37115   7,323
+**Check:** ZIP 37072 has 289 crimes in Task 2, which matches Task 1.
 
-Check: ZIP 37072 has 289 crimes in Task 2, matching Task 1.
+## Reproduce in Python
 
-NOTE
-The 38 ZIP code counts total 103,218 out of 108,287 crime points.
-The other 5,069 points fall just outside the Davidson County polygons,
-so they are not counted in any ZIP code.
+The same workflow is in [`spatial_analysis.py`](spatial_analysis.py), using GeoPandas.
+
+```bash
+pip install geopandas matplotlib
+python spatial_analysis.py
+```
+
+Put the data in this layout first:
+
+```
+data/
+├── Davidson/Davidson.shp (+ .shx .dbf .prj .cpg)
+└── CrimeLocation/CrimeLocations.shp (+ .shx .dbf .prj .cpg)
+```
+
+Output:
+
+```
+Task 1: 289 crimes within ZIP 37072
+Task 2: 38 ZIP codes, 103,218 crimes counted
+```
+
+## Repo structure
+
+```
+├── README.md
+├── spatial_analysis.py        # GeoPandas version of the QGIS workflow
+├── crime_counts_by_zip.csv    # Crime count for all 38 ZIP codes
+├── images/
+│   └── results_map.png        # Results map
+└── output/                    # Exported shapefiles
+    ├── Steven_Gobran_E1_selection.zip
+    └── Steven_Gobran_E1_join.zip
+```
+
+## Notes
+
+- 5,069 crime points (about 5%) fall just outside the Davidson County polygons, so they are not counted in any ZIP code. That's why the ZIP totals add up to 103,218 instead of 108,287.
+- ZCTAs are Census approximations of USPS ZIP codes, so their boundaries can differ slightly from mailing ZIP codes.
+
+## Tools
+
+QGIS · Python · GeoPandas · Matplotlib
+
+---
+
+*Steven Gobran · Middle Tennessee State University*
+
+<img width="1347" height="799" alt="image" src="https://github.com/user-attachments/assets/b1ae7f4a-6c4c-40d9-873b-1da3415088e6" />
+<img width="1358" height="766" alt="image" src="https://github.com/user-attachments/assets/31bbce78-5a71-4e6d-8aa9-149eedd77d16" />
+
+
